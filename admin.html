@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel - NDA Tests</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #141e30, #243b55);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 700px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00e6e6;
+    }
+    textarea {
+      width: 100%;
+      height: 250px;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 14px;
+      border: none;
+      resize: vertical;
+      background: #f0f0f0;
+      color: #333;
+      font-family: 'Poppins', sans-serif;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 10px;
+      font-size: 14px;
+      border: none;
+      font-family: 'Poppins', sans-serif;
+    }
+    button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 14px;
+      background: #00e6e6;
+      color: #000;
+      font-weight: bold;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #00cccc;
+    }
+    .info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ccc;
+      text-align: center;
+    }
+    .test-list {
+      margin-top: 20px;
+    }
+    .test-list a {
+      display: block;
+      color: #00e6e6;
+      text-decoration: underline;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🛠️ Admin Panel - Upload NDA Test</h2>
+
+    <textarea id="jsonInput">[
+  {
+    "q": "What is the full form of NDA?",
+    "options": ["National Defence Academy", "National Democratic Alliance", "New Delhi Authority"],
+    "answer": 0
+  }
+]</textarea>
+
+    <input type="text" id="filename" placeholder="Enter test name (e.g. math01)" />
+
+    <button onclick="downloadTest()">⬇️ Download JSON File</button>
+
+    <div class="info">This will save the test as a `.json` file. Upload manually to `/tests/` folder in GitHub.</div>
+
+    <div class="test-list" id="testLinks"></div>
+  </div>
+
+  <script>
+    function downloadTest() {
+      const name = document.getElementById("filename").value.trim();
+      const json = document.getElementById("jsonInput").value.trim();
+      if (!name) return alert("Please enter a filename.");
+      try {
+        const blob = new Blob([json], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = name + ".json";
+        link.click();
+      } catch (err) {
+        alert("Invalid JSON.");
+      }
+    }
+  </script>
+</body>
+</html>

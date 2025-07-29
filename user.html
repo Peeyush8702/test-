@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NDA Mock Test - User</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #141e30, #243b55);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .main-box {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    .main-box h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #00e6e6;
+    }
+    .timer {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #00ffcc;
+    }
+    .test-selector {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+    }
+    .question-box p {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    .option {
+      background: #fff;
+      color: #000;
+      padding: 12px 18px;
+      border-radius: 10px;
+      margin: 8px 0;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .option:hover {
+      background: #00e6e6;
+      color: #000;
+    }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #00e6e6;
+      color: #000;
+      transition: 0.2s;
+    }
+    button:disabled {
+      background: #888;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 22px;
+      text-align: center;
+      color: #00ff99;
+      font-weight: 600;
+    }
+    .progress-sidebar {
+      width: 120px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 20px;
+      max-height: 80vh;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+    .progress-sidebar h3 {
+      color: #00e6e6;
+      font-size: 16px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .jump-btn {
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      background: #eee;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .jump-btn.answered { background: #00e6e6; color: #000; }
+    .jump-btn.flagged { border: 2px dashed red; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main-box">
+      <h2 id="welcome">Welcome</h2>
+      <div class="timer" id="timer">00:00</div>
+      <div class="test-selector">
+        <select id="testSelect" onchange="loadTest()">
+          <option disabled selected>Select a Test</option>
+        </select>
+      </div>
+      <div id="quizBox"></div>
+      <div id="result"></div>
+    </div>
+    <div class="progress-sidebar">
+      <h3>Questions</h3>
+      <div id="progressPanel"></div>
+    </div>
+  </div>
+
+<script>
+const username = new URLSearchParams(window.location.search).get("username") || "Guest";
+document.getElementById("welcome").textContent = "Welcome, " + username;
+
+let questions = [], index = 0;
+let answers = [], flags = [];
+
+function populateTests() {
+  const tests = ["math01", "gk01", "english01"]; // Add your JSON filenames (no .json)
+  const select = document.getElementById("testSelect");
+  tests.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+}
+
+function loadTest() {
+  const file = document.getElementById("testSelect").value;
+  fetch('tests/' + file )
+    .then(res => res.json())
+    .then(data => {
+      questions = data;
+      answers = new Array(questions.length).fill(null);
+      flags = new Array(questions.length).fill(false);
+      index = 0;
+      renderQuestion();
+    }).catch(() => alert("❌ Error loading test."));
+}
+
+function renderQuestion() {
+  const q = questions[index];
+  document.getElementById("quizBox").innerHTML = `
+    <div class="question-box">
+      <p><b>Q${index + 1}:</b> ${q.q}</p>
+      ${q.options.map((opt, i) => `
+        <div class="option" onclick="selectOption(${i})" style="border: ${answers[index] === i ? '2px solid #00ffcc' : 'none'}">${opt}</div>
+      `).join("")}
+    </div>
+    <div class="nav-buttons">
+      <button onclick="prev()" ${index === 0 ? "disabled" : ""}>Previous</button>
+      <button onclick="toggleFlag()">${flags[index] ? "Unflag" : "Flag"}</button>
+      <button onclick="next()">${index === questions.length - 1 ? "Submit" : "Next"}</button>
+    </div>
+  `;
+  renderProgressBar();
+}
+
+function renderProgressBar() {
+  const panel = document.getElementById("progressPanel");
+  panel.innerHTML = "";
+  for (let i = 0; i < questions.length; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i + 1;
+    btn.className = "jump-btn";
+    if (answers[i] !== null) btn.classList.add("answered");
+    if (flags[i]) btn.classList.add("flagged");
+    btn.onclick = () => { index = i; renderQuestion(); };
+    panel.appendChild(btn);
+  }
+}
+
+function selectOption(i) { answers[index] = i; renderQuestion(); }
+function toggleFlag() { flags[index] = !flags[index]; renderQuestion(); }
+function prev() { if (index > 0) index--; renderQuestion(); }
+function next() {
+  if (index < questions.length - 1) index++;
+  else showResult();
+  renderQuestion();
+}
+
+function showResult() {
+  let score = 0, attempted = 0;
+  answers.forEach((a, i) => {
+    if (a !== null) {
+      attempted++;
+      score += (a === questions[i].answer) ? 4 : -1.33;
+    }
+  });
+  document.getElementById("quizBox").style.display = "none";
+  document.getElementById("result").innerHTML = `
+    <p>🎯 Attempted: ${attempted}/${questions.length}</p>
+    <p>✅ Score: ${score.toFixed(2)}</p>
+  `;
+}
+
+function startTimer() {
+  let sec = 0;
+  setInterval(() => {
+    sec++;
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    document.getElementById("timer").textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+populateTests();
+startTimer();
+</script>
+</body>
+</html>
