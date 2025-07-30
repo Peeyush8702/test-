@@ -167,7 +167,7 @@ function populateTests() {
 
 function loadTest() {
   const file = document.getElementById("testSelect").value;
-  fetch(file)
+  fetch(file + '.json')
     .then(res => res.json())
     .then(data => {
       questions = data;
